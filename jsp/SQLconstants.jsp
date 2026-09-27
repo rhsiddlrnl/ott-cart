@@ -9,7 +9,7 @@
 	static final String mySQL_password = "MySQL Password";
 
 	// MySQL Database
-	static final String mySQL_database = "jdbc:mysql://localhost:3306/ott_cart?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Seoul";
+	static final String mySQL_database = "jdbc:mysql://localhost:3306/OTTDB?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Seoul";
 
 	// JDBC Driver : Connector/J 8 이상은 com.mysql.cj.jdbc.Driver
 	//               (ClassNotFoundException 이 나면 예제에서 동작했던 com.mysql.jdbc.Driver 로 바꿀 것)

@@ -14,7 +14,7 @@
 | book/delete.jsp + deleteSQL.jsp | 책 삭제 (`DELETE`) | **cartDeleteSQL.jsp** | 카트에서 빼기 | cart_items |
 | (없음) | | **cart.jsp** | 내 카트, 모두 대여할 때 합계, 서비스별 구독 가능 작품 수 | cart_items, availability, services |
 | game/selectSQL.jsp | 게임 점수 랭킹 (`ORDER BY score DESC`) | **ranking.jsp** | 카트에 많이 담긴 작품 TOP 10 (`GROUP BY`, `RANK()`) | cart_items, titles |
-| SQLconstants.jsp | DB 접속 상수 | **SQLconstants.jsp** | DB = `ott_cart`, 연결 함수 `getConnection()` | |
+| SQLconstants.jsp | DB 접속 상수 | **SQLconstants.jsp** | DB = `OTTDB`, 연결 함수 `getConnection()` | |
 | log.jsp | 접속 로그 기록 | **log.jsp** | Action, UserID 항목 추가 | |
 | book/SQL.txt, game/SQL.txt | 테이블 1개 | **SQL.txt** | 테이블 12개 + 데모 데이터 | 전체 |
 | | | util.jsp, header.jsp, footer.jsp, style.css | 공통 함수, 공통 화면 | |
@@ -65,9 +65,9 @@ search.jsp ──include──▶ selectSQL.jsp        SELECT ... LIKE → 목�
 
 ## 4. 서버에 올리고 실행하기 (AWS)
 
-1. **SQL**: phpMyAdmin 에서 `ott_cart` DB 를 만들고 `SQL.txt` 의 2) ~ 4) 실행
+1. **SQL**: phpMyAdmin 에서 `OTTDB` DB 를 만들고 `SQL.txt` 의 2) ~ 4) 실행
 2. **파일 복사**: 이 `jsp` 폴더를 서버의 `webapps/ROOT/ott-cart/jsp/` 로 복사
-   (GitHub 에 올렸다면 `cd /var/lib/tomcat10/webapps/ROOT/ && sudo git clone <팀 저장소 URL>`)
+   (GitHub 에 올렸다면 `cd /var/lib/tomcat10/webapps/ROOT/ && sudo git clone https://github.com/rhsiddlrnl/ott-cart.git`)
 3. **DB 비밀번호**: `sudo vi SQLconstants.jsp` 에서 `mySQL_password` 수정
 4. **로그 파일 권한**:
    ```bash

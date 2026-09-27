@@ -3,7 +3,7 @@ OTT Cart - JSP 실습용 SQL (Web-DB 예제의 book/SQL.txt, game/SQL.txt 를 OT
 1) 새 데이터베이스 만들기
 
 - phpMyAdmin 좌측상단 '새로운' 아이콘 클릭
-- 데이터베이스명 ott_cart 입력
+- 데이터베이스명 OTTDB 입력 (리눅스 MySQL 은 대소문자를 구분하므로 정확히)
 - 데이터정렬방식 utf8mb4_unicode_ci 입력
 - '만들기' 버튼 클릭
 - 아래 2) ~ 4) 를 차례로 SQL 탭에 붙여넣고 실행 (주석문 -- 은 지우고 실행)

@@ -181,9 +181,9 @@ Start from one flat table:
 ### DDL (MySQL 8 / MariaDB 10.2+)
 
 ```sql
-CREATE DATABASE IF NOT EXISTS ott_cart
+CREATE DATABASE IF NOT EXISTS OTTDB
   DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE ott_cart;
+USE OTTDB;
 
 CREATE TABLE titles (
   title_id     INT AUTO_INCREMENT PRIMARY KEY,
