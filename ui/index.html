@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OTT Cart</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0d12;
+    --panel: #141821;
+    --panel-2: #1b2030;
+    --line: #262c3b;
+    --text: #eef1f7;
+    --muted: #9aa3b5;
+    --faint: #6b7385;
+    --accent: #7c5cff;
+    --accent-2: #22d3a6;
+    --warn: #f5b041;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: Inter, "Noto Sans KR", system-ui, sans-serif; line-height: 1.5;
+  }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
+
+  .topbar {
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(11, 13, 18, .85); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .bar { display: flex; align-items: center; justify-content: space-between; height: 60px; }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; letter-spacing: -.02em; }
+  .logo-mark {
+    width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2)); font-size: 13px;
+  }
+  nav { display: flex; gap: 6px; }
+  nav a { padding: 8px 12px; border-radius: 10px; color: var(--muted); font-size: 14px; font-weight: 500; }
+  nav a:hover { color: var(--text); background: var(--panel); }
+  .count {
+    display: inline-block; min-width: 20px; padding: 0 6px; margin-left: 4px; border-radius: 999px;
+    background: var(--accent); color: #fff; font-size: 12px; text-align: center;
+  }
+
+  .hero { padding: 64px 0 40px; background: radial-gradient(900px 380px at 15% 0%, rgba(124, 92, 255, .22), transparent 70%), radial-gradient(700px 320px at 90% 10%, rgba(34, 211, 166, .12), transparent 70%); }
+  .eyebrow { color: var(--accent-2); font-weight: 600; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; margin: 0 0 12px; }
+  h1 { font-size: clamp(32px, 5.4vw, 56px); line-height: 1.08; letter-spacing: -.03em; margin: 0 0 16px; font-weight: 800; }
+  .grad { background: linear-gradient(90deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .lead { color: var(--muted); font-size: 17px; max-width: 620px; margin: 0 0 28px; }
+  .search {
+    display: flex; align-items: center; gap: 10px; max-width: 620px; padding: 0 16px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+  }
+  .search:focus-within { border-color: var(--accent); }
+  .search svg { flex: none; color: var(--faint); }
+  .search input { flex: 1; min-width: 0; height: 54px; background: none; border: 0; outline: 0; color: var(--text); font: inherit; font-size: 16px; }
+  .stats { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 18px; color: var(--muted); font-size: 14px; }
+  .stats b { color: var(--text); }
+
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) 390px; gap: 28px; align-items: start; padding-top: 12px; padding-bottom: 56px; }
+  .filters { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    padding: 7px 14px; border-radius: 999px; font-size: 13px; font-weight: 500;
+    background: var(--panel); border: 1px solid var(--line); color: var(--muted);
+  }
+  .chip:hover { color: var(--text); border-color: #3a4256; }
+  .chip.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .chips.small .chip { padding: 5px 11px; font-size: 12px; }
+  .chips.small .chip.on { background: color-mix(in srgb, var(--c) 30%, transparent); border-color: var(--c); color: #fff; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 18px; }
+  .card { display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; transition: transform .15s, border-color .15s; }
+  .card:hover { transform: translateY(-3px); border-color: #3a4256; }
+  .card.in { border-color: var(--accent); }
+  .poster {
+    position: relative; aspect-ratio: 2 / 3; padding: 12px; display: flex; flex-direction: column; justify-content: flex-end;
+    background: linear-gradient(160deg, hsl(var(--h) 65% 50%), hsl(calc(var(--h) + 45) 60% 14%));
+  }
+  .poster::after { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent 45%, rgba(0, 0, 0, .55)); }
+  .ptitle { position: relative; z-index: 1; font-weight: 800; font-size: 19px; line-height: 1.15; letter-spacing: -.02em; text-shadow: 0 2px 12px rgba(0, 0, 0, .4); }
+  .tag {
+    position: absolute; z-index: 1; top: 10px; left: 10px; padding: 3px 8px; border-radius: 6px;
+    background: rgba(0, 0, 0, .45); font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+  }
+  .card-body { display: flex; flex-direction: column; gap: 10px; flex: 1; padding: 12px; }
+  .meta { color: var(--muted); font-size: 12px; }
+  .svcs { display: flex; flex-wrap: wrap; gap: 5px; flex: 1; align-content: flex-start; }
+  .svc {
+    padding: 2px 7px; border-radius: 6px; font-size: 11px; font-weight: 600; white-space: nowrap;
+    background: color-mix(in srgb, var(--c) 22%, transparent); border: 1px solid color-mix(in srgb, var(--c) 55%, transparent);
+  }
+  .svc.rent { --c: #6b7385; color: var(--muted); }
+  .add {
+    width: 100%; padding: 9px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--panel-2); font-size: 13px; font-weight: 600;
+  }
+  .add:hover { border-color: var(--accent); }
+  .card.in .add { background: var(--accent); border-color: var(--accent); }
+  .empty { color: var(--muted); text-align: center; padding: 40px 0; }
+
+  .cart {
+    position: sticky; top: 76px; max-height: calc(100vh - 92px); overflow-y: auto;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 20px;
+  }
+  .cart h2 { font-size: 18px; margin: 0; }
+  .cart h3 { font-size: 13px; color: var(--muted); font-weight: 600; margin: 0 0 10px; }
+  .cart-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .link { background: none; border: 0; color: var(--muted); font-size: 13px; padding: 4px; }
+  .link:hover { color: var(--text); }
+  #cartList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .ci { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 10px; background: var(--panel-2); }
+  .ci-thumb { flex: none; width: 34px; height: 48px; border-radius: 6px; background: linear-gradient(160deg, hsl(var(--h) 65% 50%), hsl(calc(var(--h) + 45) 60% 14%)); }
+  .ci-main { flex: 1; min-width: 0; }
+  .ci-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ci-meta { font-size: 12px; color: var(--muted); }
+  .rm { flex: none; width: 28px; height: 28px; border-radius: 8px; border: 0; background: none; color: var(--faint); font-size: 18px; }
+  .rm:hover { background: var(--line); color: var(--text); }
+  .cart-empty { color: var(--muted); font-size: 14px; padding: 18px; text-align: center; border: 1px dashed var(--line); border-radius: 12px; }
+
+  .prefs { margin: 18px 0; padding: 16px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .switch { display: flex; align-items: center; gap: 10px; margin-top: 14px; font-size: 13px; color: var(--muted); cursor: pointer; }
+  .switch input { position: absolute; opacity: 0; }
+  .track { flex: none; width: 36px; height: 20px; border-radius: 999px; background: var(--line); position: relative; transition: background .15s; }
+  .track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: transform .15s; }
+  .switch input:checked + .track { background: var(--accent); }
+  .switch input:checked + .track::after { transform: translateX(16px); }
+  .switch input:focus-visible + .track { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .best { border-radius: 14px; padding: 16px; background: linear-gradient(160deg, rgba(124, 92, 255, .18), rgba(34, 211, 166, .08)); border: 1px solid rgba(124, 92, 255, .45); }
+  .best-top { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px; }
+  .label { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent-2); }
+  .total { font-size: 30px; font-weight: 800; letter-spacing: -.03em; line-height: 1; }
+  .total small { font-size: 13px; font-weight: 500; color: var(--muted); margin-left: 4px; }
+  .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .step { display: flex; gap: 10px; padding: 10px; border-radius: 10px; background: rgba(11, 13, 18, .55); }
+  .step-bar { flex: none; width: 4px; border-radius: 4px; background: var(--c); }
+  .step-main { flex: 1; min-width: 0; }
+  .step-title { font-size: 14px; font-weight: 600; }
+  .step-title em { font-style: normal; color: var(--muted); font-weight: 500; }
+  .step-sub { font-size: 12px; color: var(--muted); }
+  .note { font-size: 12px; color: var(--accent-2); margin-top: 2px; }
+  .amt { font-weight: 700; font-size: 14px; white-space: nowrap; }
+
+  .block { margin-top: 18px; }
+  .row { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; padding: 7px 0; border-bottom: 1px solid var(--line); color: var(--muted); }
+  .row b { color: var(--text); font-weight: 600; }
+  .row .strike { text-decoration: line-through; color: var(--faint); }
+  .save { margin: 10px 0 0; font-size: 13px; color: var(--accent-2); font-weight: 600; }
+  .alt { display: flex; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 10px; background: var(--panel-2); font-size: 13px; margin-bottom: 6px; }
+  .alt span:last-child { color: var(--muted); white-space: nowrap; }
+  .warn { margin-top: 14px; padding: 10px 12px; border-radius: 10px; font-size: 13px; background: rgba(245, 176, 65, .12); border: 1px solid rgba(245, 176, 65, .4); color: var(--warn); }
+
+  .how { padding: 56px 16px; border-top: 1px solid var(--line); }
+  .how h2 { font-size: 28px; letter-spacing: -.02em; margin: 0 0 24px; }
+  .steps-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .how-card { padding: 22px; border-radius: var(--radius); background: var(--panel); border: 1px solid var(--line); }
+  .num { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; font-weight: 800; margin-bottom: 14px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
+  .how-card h3 { margin: 0 0 6px; font-size: 16px; }
+  .how-card p { margin: 0; color: var(--muted); font-size: 14px; }
+
+  footer { border-top: 1px solid var(--line); padding: 28px 0 40px; color: var(--faint); font-size: 12px; }
+  footer p { margin: 4px 0; }
+
+  .fab {
+    display: none; position: fixed; right: 16px; bottom: 16px; z-index: 30; padding: 12px 18px; border-radius: 999px;
+    background: var(--accent); font-weight: 700; font-size: 14px; box-shadow: 0 10px 30px rgba(124, 92, 255, .45);
+  }
+  .fab .count { background: #fff; color: var(--accent); }
+
+  @media (max-width: 1000px) {
+    .layout { grid-template-columns: 1fr; }
+    .cart { position: static; max-height: none; }
+    .fab { display: block; }
+  }
+  @media (max-width: 640px) {
+    nav a:not(.nav-cart) { display: none; }
+    .hero { padding: 40px 0 28px; }
+    .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .ptitle { font-size: 16px; }
+    .steps-3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap bar">
+    <a class="logo" href="#"><span class="logo-mark">▶</span>OTT Cart</a>
+    <nav>
+      <a href="#browse">Browse</a>
+      <a href="#how">How it works</a>
+      <a href="#cart" class="nav-cart">Cart<span class="count" id="navCount">0</span></a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Streaming price optimizer</p>
+    <h1>Watch everything on your list.<br><span class="grad">Pay the least.</span></h1>
+    <p class="lead">Add the movies and dramas you want to watch. We compare subscriptions and rentals across Korean streaming services and find the cheapest combination.</p>
+    <label class="search">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="Search movies and dramas…" aria-label="Search titles" autocomplete="off">
+    </label>
+    <div class="stats">
+      <span><b id="svcCount">0</b> streaming services</span>
+      <span><b id="storeCount">0</b> rental stores</span>
+      <span><b id="titleCount">0</b> titles</span>
+    </div>
+  </div>
+</section>
+
+<main class="wrap layout" id="browse">
+  <section>
+    <div class="filters">
+      <div class="chips" id="typeChips"></div>
+      <div class="chips" id="genreChips"></div>
+    </div>
+    <div class="grid" id="grid"></div>
+    <p class="empty" id="noResults" hidden>No titles match your search.</p>
+  </section>
+
+  <aside class="cart" id="cart">
+    <div class="cart-head">
+      <h2>Your cart</h2>
+      <button class="link" id="clearCart">Clear all</button>
+    </div>
+    <ul id="cartList"></ul>
+    <div class="prefs">
+      <h3>I already subscribe to</h3>
+      <div class="chips small" id="ownedChips"></div>
+      <label class="switch">
+        <input type="checkbox" id="adsOk">
+        <span class="track"></span>
+        <span>Ad-supported plans are OK</span>
+      </label>
+    </div>
+    <div id="result"></div>
+  </aside>
+</main>
+
+<section class="wrap how" id="how">
+  <h2>How it works</h2>
+  <div class="steps-3">
+    <div class="how-card"><div class="num">1</div><h3>Fill your cart</h3><p>Pick every movie and drama you want to watch this month.</p></div>
+    <div class="how-card"><div class="num">2</div><h3>Tell us what you pay for</h3><p>Services you already subscribe to cost nothing extra.</p></div>
+    <div class="how-card"><div class="num">3</div><h3>Get the cheapest plan</h3><p>We check every mix of subscriptions and rentals and show why the winner wins.</p></div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p><b>OTT Cart</b> · University SQL database project</p>
+    <p>Demo data: availability and prices are sample values for demonstration, not current offers.</p>
+    <p>Planned: title data from TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
+  </div>
+</footer>
+
+<a href="#cart" class="fab">Cart<span class="count" id="fabCount">0</span></a>
+
+<script>
+// ---- Sample data (mirrors the plans / availability tables in DESIGN.md) ----
+const SERVICES = {
+  netflix: { name: 'Netflix',      color: '#E50914', plans: [{ name: 'Standard with ads', fee: 5500, ads: true }, { name: 'Standard', fee: 13500, ads: false }] },
+  tving:   { name: 'TVING',        color: '#FF3D5A', plans: [{ name: 'Standard with ads', fee: 5500, ads: true }, { name: 'Basic', fee: 9500, ads: false }] },
+  wavve:   { name: 'wavve',        color: '#1A5CFF', plans: [{ name: 'Basic', fee: 7900, ads: false }] },
+  coupang: { name: 'Coupang Play', color: '#00A0E0', plans: [{ name: 'WOW membership', fee: 7890, ads: false }] },
+  disney:  { name: 'Disney+',      color: '#3B5BDB', plans: [{ name: 'Standard', fee: 9900, ads: false }] },
+  watcha:  { name: 'Watcha',       color: '#FF2E7E', plans: [{ name: 'Basic', fee: 7900, ads: false }] },
+};
+const STORES = { google: 'Google Play', apple: 'Apple TV', naver: 'Naver Series On' };
+
+const TITLES = [
+  { id: 1,  name: 'Parasite',               type: 'movie', year: 2019, genres: ['Drama', 'Thriller'],   hue: 150, subs: ['tving', 'watcha'],   rent: { google: 3000, naver: 3000 } },
+  { id: 2,  name: 'The Glory',              type: 'tv',    year: 2022, genres: ['Drama', 'Thriller'],   hue: 280, subs: ['netflix'],           rent: {} },
+  { id: 3,  name: 'Squid Game',             type: 'tv',    year: 2021, genres: ['Thriller', 'Action'],  hue: 330, subs: ['netflix'],           rent: {} },
+  { id: 4,  name: 'Moving',                 type: 'tv',    year: 2023, genres: ['Action', 'Fantasy'],   hue: 210, subs: ['disney'],            rent: {} },
+  { id: 5,  name: 'Exhuma',                 type: 'movie', year: 2024, genres: ['Horror', 'Mystery'],   hue: 20,  subs: ['tving', 'coupang'],  rent: { google: 5500, apple: 5500 } },
+  { id: 6,  name: '12.12: The Day',         type: 'movie', year: 2023, genres: ['Drama', 'History'],    hue: 0,   subs: ['netflix', 'tving'],  rent: { google: 4500 } },
+  { id: 7,  name: 'Decision to Leave',      type: 'movie', year: 2022, genres: ['Romance', 'Mystery'],  hue: 190, subs: ['watcha', 'wavve'],   rent: { google: 3000 } },
+  { id: 8,  name: 'Reply 1988',             type: 'tv',    year: 2015, genres: ['Comedy', 'Romance'],   hue: 40,  subs: ['netflix', 'tving'],  rent: {} },
+  { id: 9,  name: 'Queen of Tears',         type: 'tv',    year: 2024, genres: ['Romance', 'Drama'],    hue: 310, subs: ['netflix', 'tving'],  rent: {} },
+  { id: 10, name: 'Signal',                 type: 'tv',    year: 2016, genres: ['Mystery', 'Thriller'], hue: 230, subs: ['netflix', 'tving'],  rent: {} },
+  { id: 11, name: 'Kingdom',                type: 'tv',    year: 2019, genres: ['Horror', 'History'],   hue: 10,  subs: ['netflix'],           rent: {} },
+  { id: 12, name: 'Train to Busan',         type: 'movie', year: 2016, genres: ['Horror', 'Action'],    hue: 100, subs: ['netflix', 'wavve'],  rent: { google: 2500 } },
+  { id: 13, name: 'The Roundup: Punishment',type: 'movie', year: 2024, genres: ['Action', 'Comedy'],    hue: 50,  subs: [],                    rent: { google: 5500, apple: 5000, naver: 5000 } },
+  { id: 14, name: 'Oppenheimer',            type: 'movie', year: 2023, genres: ['Drama', 'History'],    hue: 25,  subs: ['coupang'],           rent: { google: 4500, apple: 4500 } },
+  { id: 15, name: 'Dune: Part Two',         type: 'movie', year: 2024, genres: ['Sci-fi', 'Action'],    hue: 35,  subs: [],                    rent: { google: 5000, apple: 5000 } },
+  { id: 16, name: 'Inside Out 2',           type: 'movie', year: 2024, genres: ['Animation', 'Comedy'], hue: 260, subs: ['disney'],            rent: { google: 5500 } },
+  { id: 17, name: 'Weak Hero Class 1',      type: 'tv',    year: 2022, genres: ['Action', 'Drama'],     hue: 170, subs: ['wavve', 'netflix'],  rent: {} },
+  { id: 18, name: 'Pachinko',               type: 'tv',    year: 2022, genres: ['Drama', 'History'],    hue: 60,  subs: [],                    rent: {} },
+];
+const BY_ID = Object.fromEntries(TITLES.map(t => [t.id, t]));
+
+// ---- Helpers ----
+const won = n => '₩' + n.toLocaleString('ko-KR');
+const typeLabel = t => (t.type === 'movie' ? 'Movie' : 'Drama');
+const $ = id => document.getElementById(id);
+function load(key, fallback) {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch { return fallback; }
+}
+function save(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+}
+
+// ---- State ----
+const state = {
+  q: '',
+  type: 'all',
+  genre: 'All',
+  cart: load('ott.cart', [1, 5, 9, 15]).filter(id => BY_ID[id]),
+  owned: new Set(load('ott.owned', [])),
+  adsOk: load('ott.adsOk', false),
+};
+
+// ---- Optimizer: try every subset of subscriptions (see DESIGN.md §4) ----
+function cheapestPlan(sid, adsOk) {
+  const plans = SERVICES[sid].plans.filter(p => adsOk || !p.ads);
+  return plans.reduce((a, b) => (b.fee < a.fee ? b : a));
+}
+function cheapestRental(t) {
+  const entries = Object.entries(t.rent);
+  if (!entries.length) return null;
+  const [store, price] = entries.reduce((a, b) => (b[1] < a[1] ? b : a));
+  return { store, price };
+}
+
+function optimize(cartIds, owned, adsOk) {
+  const items = cartIds.map(id => BY_ID[id]);
+  const unavailable = items.filter(t => !t.subs.length && !cheapestRental(t));
+  const watchable = items.filter(t => !unavailable.includes(t));
+  const cands = [...new Set(watchable.flatMap(t => t.subs))];
+  const results = [];
+
+  for (let mask = 0; mask < (1 << cands.length); mask++) {
+    const chosen = cands.filter((_, i) => mask & (1 << i));
+    if (cands.some(s => owned.has(s) && !chosen.includes(s))) continue; // owned services are free, always use them
+    const redundant = chosen.some(s => !owned.has(s) &&
+      watchable.filter(t => t.subs.includes(s)).every(t => t.subs.some(o => o !== s && chosen.includes(o))));
+    if (redundant) continue;
+
+    const subs = chosen
+      .map(sid => {
+        const plan = cheapestPlan(sid, adsOk);
+        return { sid, owned: owned.has(sid), plan, fee: owned.has(sid) ? 0 : plan.fee, titles: [] };
+      })
+      .sort((a, b) => b.owned - a.owned || a.fee - b.fee);
+    const rentals = [];
+    let ok = true;
+    for (const t of watchable) {
+      const cover = subs.find(s => t.subs.includes(s.sid));
+      if (cover) { cover.titles.push(t); continue; }
+      const r = cheapestRental(t);
+      if (!r) { ok = false; break; }
+      rentals.push({ title: t, ...r });
+    }
+    if (!ok) continue;
+    const cost = subs.reduce((n, s) => n + s.fee, 0) + rentals.reduce((n, r) => n + r.price, 0);
+    results.push({ cost, subs, rentals });
+  }
+  results.sort((a, b) => a.cost - b.cost || (a.subs.length + a.rentals.length) - (b.subs.length + b.rentals.length));
+
+  const rentAll = watchable.every(t => cheapestRental(t))
+    ? watchable.reduce((n, t) => n + cheapestRental(t).price, 0) : null;
+  const subAll = (() => {
+    const fees = cands.reduce((n, s) => n + (owned.has(s) ? 0 : cheapestPlan(s, adsOk).fee), 0);
+    const extra = watchable.filter(t => !t.subs.length).reduce((n, t) => n + cheapestRental(t).price, 0);
+    return cands.length ? fees + extra : null;
+  })();
+
+  return { results: results.slice(0, 3), unavailable, rentAll, subAll, nServices: cands.length };
+}
+
+// ---- Rendering ----
+function serviceBadges(t) {
+  const subs = t.subs.map(s => `<span class="svc" style="--c:${SERVICES[s].color}">${SERVICES[s].name}</span>`);
+  const r = cheapestRental(t);
+  if (r) subs.push(`<span class="svc rent">Rent ${won(r.price)}</span>`);
+  if (!subs.length) subs.push(`<span class="svc rent">Not in Korea</span>`);
+  return subs.join('');
+}
+
+function renderFilters() {
+  const types = [['all', 'All'], ['movie', 'Movies'], ['tv', 'Dramas']];
+  $('typeChips').innerHTML = types.map(([v, l]) =>
+    `<button class="chip ${state.type === v ? 'on' : ''}" data-type="${v}">${l}</button>`).join('');
+  const genres = ['All', ...new Set(TITLES.flatMap(t => t.genres))].sort((a, b) => (a === 'All' ? -1 : b === 'All' ? 1 : a.localeCompare(b)));
+  $('genreChips').innerHTML = genres.map(g =>
+    `<button class="chip ${state.genre === g ? 'on' : ''}" data-genre="${g}">${g}</button>`).join('');
+}
+
+function renderGrid() {
+  const q = state.q.trim().toLowerCase();
+  const list = TITLES.filter(t =>
+    (state.type === 'all' || t.type === state.type) &&
+    (state.genre === 'All' || t.genres.includes(state.genre)) &&
+    (!q || t.name.toLowerCase().includes(q)));
+  $('grid').innerHTML = list.map(t => {
+    const inCart = state.cart.includes(t.id);
+    return `<article class="card ${inCart ? 'in' : ''}">
+      <div class="poster" style="--h:${t.hue}"><span class="tag">${typeLabel(t)}</span><div class="ptitle">${t.name}</div></div>
+      <div class="card-body">
+        <div class="meta">${t.year} · ${t.genres.join(', ')}</div>
+        <div class="svcs">${serviceBadges(t)}</div>
+        <button class="add" data-toggle="${t.id}">${inCart ? '✓ In cart' : '+ Add to cart'}</button>
+      </div>
+    </article>`;
+  }).join('');
+  $('noResults').hidden = list.length > 0;
+}
+
+function renderCart() {
+  const n = state.cart.length;
+  $('navCount').textContent = n;
+  $('fabCount').textContent = n;
+  $('clearCart').hidden = !n;
+  $('cartList').innerHTML = n
+    ? state.cart.map(id => {
+        const t = BY_ID[id];
+        return `<li class="ci"><div class="ci-thumb" style="--h:${t.hue}"></div>
+          <div class="ci-main"><div class="ci-name">${t.name}</div><div class="ci-meta">${t.year} · ${typeLabel(t)}</div></div>
+          <button class="rm" data-remove="${id}" aria-label="Remove ${t.name}">×</button></li>`;
+      }).join('')
+    : `<li class="cart-empty">Your cart is empty. Add a few titles to compare prices.</li>`;
+
+  $('ownedChips').innerHTML = Object.entries(SERVICES).map(([sid, s]) =>
+    `<button class="chip ${state.owned.has(sid) ? 'on' : ''}" style="--c:${s.color}" data-owned="${sid}" aria-pressed="${state.owned.has(sid)}">${s.name}</button>`).join('');
+  $('adsOk').checked = state.adsOk;
+
+  renderResult();
+}
+
+function summarize(r) {
+  const parts = r.subs.map(s => SERVICES[s.sid].name);
+  if (r.rentals.length) parts.push(`${r.rentals.length} rental${r.rentals.length > 1 ? 's' : ''}`);
+  return parts.join(' + ') || 'Nothing to pay';
+}
+
+function renderResult() {
+  const box = $('result');
+  if (!state.cart.length) { box.innerHTML = ''; return; }
+  const { results, unavailable, rentAll, subAll, nServices } = optimize(state.cart, state.owned, state.adsOk);
+  let html = '';
+
+  if (results.length) {
+    const best = results[0];
+    const steps = [
+      ...best.subs.map(s => {
+        const rentValue = s.titles.reduce((n, t) => n + (cheapestRental(t)?.price || 0), 0);
+        const rentable = s.titles.every(t => cheapestRental(t));
+        const note = s.owned
+          ? 'Already subscribed · no extra cost'
+          : rentable && s.titles.length > 1 ? `Renting these would cost ${won(rentValue)}` : '';
+        return `<li class="step"><span class="step-bar" style="--c:${SERVICES[s.sid].color}"></span>
+          <div class="step-main">
+            <div class="step-title">${s.owned ? 'Watch on' : 'Subscribe to'} ${SERVICES[s.sid].name} ${s.owned ? '' : `<em>${s.plan.name}</em>`}</div>
+            <div class="step-sub">${s.titles.map(t => t.name).join(', ')}</div>
+            ${note ? `<div class="note">${note}</div>` : ''}
+          </div><div class="amt">${won(s.fee)}</div></li>`;
+      }),
+      ...best.rentals.map(r => `<li class="step"><span class="step-bar" style="--c:#6b7385"></span>
+          <div class="step-main"><div class="step-title">Rent on ${STORES[r.store]}</div><div class="step-sub">${r.title.name}</div></div>
+          <div class="amt">${won(r.price)}</div></li>`),
+    ];
+    html += `<div class="best">
+      <div class="best-top"><span class="label">Cheapest plan</span><div class="total">${won(best.cost)}<small>/ month</small></div></div>
+      <ul class="steps">${steps.join('')}</ul></div>`;
+
+    const rows = [];
+    if (rentAll !== null) rows.push(['Renting everything', rentAll]);
+    if (subAll !== null && nServices > 1) rows.push([`Subscribing to all ${nServices} services`, subAll]);
+    if (rows.length) {
+      const simplest = Math.min(...rows.map(r => r[1]));
+      const saved = simplest - best.cost;
+      html += `<div class="block"><h3>Compared with</h3>
+        ${rows.map(([l, v]) => `<div class="row"><span>${l}</span><span class="${v > best.cost ? 'strike' : ''}">${won(v)}</span></div>`).join('')}
+        <div class="row"><span>This plan</span><b>${won(best.cost)}</b></div>
+        <p class="save">${saved > 0 ? `You save ${won(saved)} (${Math.round(saved / simplest * 100)}%) over the cheaper simple option.` : 'The simple option is already the cheapest here.'}</p></div>`;
+    }
+
+    if (results.length > 1) {
+      html += `<div class="block"><h3>Other options</h3>${results.slice(1).map(r =>
+        `<div class="alt"><span>${summarize(r)}</span><span>${won(r.cost)} · +${won(r.cost - best.cost)}</span></div>`).join('')}</div>`;
+    }
+  }
+
+  if (unavailable.length) {
+    html += `<div class="warn">Not available to stream or rent in Korea: ${unavailable.map(t => t.name).join(', ')}</div>`;
+  }
+  box.innerHTML = html;
+}
+
+// ---- Events ----
+function persist() {
+  save('ott.cart', state.cart);
+  save('ott.owned', [...state.owned]);
+  save('ott.adsOk', state.adsOk);
+}
+function toggleCart(id) {
+  state.cart = state.cart.includes(id) ? state.cart.filter(x => x !== id) : [...state.cart, id];
+  persist(); renderGrid(); renderCart();
+}
+
+$('q').addEventListener('input', e => { state.q = e.target.value; renderGrid(); });
+$('typeChips').addEventListener('click', e => {
+  const b = e.target.closest('[data-type]'); if (!b) return;
+  state.type = b.dataset.type; renderFilters(); renderGrid();
+});
+$('genreChips').addEventListener('click', e => {
+  const b = e.target.closest('[data-genre]'); if (!b) return;
+  state.genre = b.dataset.genre; renderFilters(); renderGrid();
+});
+$('grid').addEventListener('click', e => {
+  const b = e.target.closest('[data-toggle]'); if (b) toggleCart(+b.dataset.toggle);
+});
+$('cartList').addEventListener('click', e => {
+  const b = e.target.closest('[data-remove]'); if (b) toggleCart(+b.dataset.remove);
+});
+$('clearCart').addEventListener('click', () => { state.cart = []; persist(); renderGrid(); renderCart(); });
+$('ownedChips').addEventListener('click', e => {
+  const b = e.target.closest('[data-owned]'); if (!b) return;
+  const sid = b.dataset.owned;
+  state.owned.has(sid) ? state.owned.delete(sid) : state.owned.add(sid);
+  persist(); renderCart();
+});
+$('adsOk').addEventListener('change', e => { state.adsOk = e.target.checked; persist(); renderCart(); });
+
+$('svcCount').textContent = Object.keys(SERVICES).length;
+$('storeCount').textContent = Object.keys(STORES).length;
+$('titleCount').textContent = TITLES.length;
+renderFilters();
+renderGrid();
+renderCart();
+</script>
+</body>
+</html>

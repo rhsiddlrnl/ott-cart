@@ -1,0 +1,188 @@
+OTT Cart - JSP 실습용 SQL (Web-DB 예제의 book/SQL.txt, game/SQL.txt 를 OTT Cart 스키마로 바꾼 것)
+
+1) 새 데이터베이스 만들기
+
+- phpMyAdmin 좌측상단 '새로운' 아이콘 클릭
+- 데이터베이스명 ott_cart 입력
+- 데이터정렬방식 utf8mb4_unicode_ci 입력
+- '만들기' 버튼 클릭
+- 아래 2) ~ 4) 를 차례로 SQL 탭에 붙여넣고 실행 (주석문 -- 은 지우고 실행)
+
+
+2) 테이블 12개 생성 (DESIGN.md 3장 DDL 과 동일)
+
+CREATE TABLE titles (
+  title_id     INT AUTO_INCREMENT PRIMARY KEY,
+  tmdb_id      INT NOT NULL,
+  name         VARCHAR(200) NOT NULL,
+  title_type   ENUM('movie','tv') NOT NULL,
+  release_year SMALLINT,
+  poster_url   VARCHAR(255),
+  UNIQUE KEY uq_titles_tmdb (tmdb_id, title_type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE genres (
+  genre_id INT PRIMARY KEY,
+  name     VARCHAR(50) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE title_genres (
+  title_id INT NOT NULL,
+  genre_id INT NOT NULL,
+  PRIMARY KEY (title_id, genre_id),
+  FOREIGN KEY (title_id) REFERENCES titles(title_id) ON DELETE CASCADE,
+  FOREIGN KEY (genre_id) REFERENCES genres(genre_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE services (
+  service_id       INT AUTO_INCREMENT PRIMARY KEY,
+  tmdb_provider_id INT UNIQUE,
+  name             VARCHAR(50) NOT NULL,
+  kind             ENUM('subscription','store') NOT NULL,
+  logo_url         VARCHAR(255)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE plans (
+  plan_id          INT AUTO_INCREMENT PRIMARY KEY,
+  service_id       INT NOT NULL,
+  plan_name        VARCHAR(50) NOT NULL,
+  plan_type        ENUM('base','bundle','addon') NOT NULL DEFAULT 'base',
+  monthly_fee      INT NOT NULL,
+  has_ads          BOOLEAN NOT NULL DEFAULT FALSE,
+  price_checked_on DATE NOT NULL,
+  FOREIGN KEY (service_id) REFERENCES services(service_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE plan_services (
+  plan_id    INT NOT NULL,
+  service_id INT NOT NULL,
+  PRIMARY KEY (plan_id, service_id),
+  FOREIGN KEY (plan_id)    REFERENCES plans(plan_id) ON DELETE CASCADE,
+  FOREIGN KEY (service_id) REFERENCES services(service_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE addon_bases (
+  addon_plan_id INT NOT NULL,
+  base_plan_id  INT NOT NULL,
+  PRIMARY KEY (addon_plan_id, base_plan_id),
+  FOREIGN KEY (addon_plan_id) REFERENCES plans(plan_id) ON DELETE CASCADE,
+  FOREIGN KEY (base_plan_id)  REFERENCES plans(plan_id) ON DELETE CASCADE,
+  CHECK (addon_plan_id <> base_plan_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE access_types (
+  access_type_id TINYINT PRIMARY KEY,
+  name           VARCHAR(20) NOT NULL UNIQUE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE availability (
+  title_id       INT NOT NULL,
+  service_id     INT NOT NULL,
+  access_type_id TINYINT NOT NULL,
+  price          INT NULL,
+  source         ENUM('tmdb','manual') NOT NULL DEFAULT 'tmdb',
+  updated_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (title_id, service_id, access_type_id),
+  FOREIGN KEY (title_id)       REFERENCES titles(title_id) ON DELETE CASCADE,
+  FOREIGN KEY (service_id)     REFERENCES services(service_id) ON DELETE CASCADE,
+  FOREIGN KEY (access_type_id) REFERENCES access_types(access_type_id),
+  CHECK ((access_type_id = 1 AND price IS NULL) OR (access_type_id <> 1 AND price IS NOT NULL))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE users (
+  user_id       INT AUTO_INCREMENT PRIMARY KEY,
+  email         VARCHAR(100) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  nickname      VARCHAR(30) NOT NULL,
+  created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE cart_items (
+  user_id  INT NOT NULL,
+  title_id INT NOT NULL,
+  added_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (user_id, title_id),
+  FOREIGN KEY (user_id)  REFERENCES users(user_id) ON DELETE CASCADE,
+  FOREIGN KEY (title_id) REFERENCES titles(title_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE user_plans (
+  user_id INT NOT NULL,
+  plan_id INT NOT NULL,
+  PRIMARY KEY (user_id, plan_id),
+  FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+  FOREIGN KEY (plan_id) REFERENCES plans(plan_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+3) 데모 데이터 입력
+
+※ 발표 시연용 예시 데이터입니다. 어떤 작품이 어느 서비스에 있는지, 대여 가격 등은 실제와 다를 수 있습니다.
+   실제 데이터는 DATA_SOURCES.md 4장(TMDB import)과 5장(요금 직접 입력)으로 교체합니다.
+   이번 JSP 실습에서는 plans / plan_services / addon_bases / user_plans 는 비워 둡니다 (최적화 단계에서 사용).
+
+INSERT INTO access_types VALUES (1,'subscription'), (2,'rent'), (3,'buy');
+
+INSERT INTO genres (genre_id, name) VALUES
+(18,'드라마'), (53,'스릴러'), (35,'코미디'), (28,'액션'), (878,'SF'),
+(10749,'로맨스'), (16,'애니메이션'), (10765,'SF & 판타지'), (9648,'미스터리');
+
+INSERT INTO services (service_id, tmdb_provider_id, name, kind) VALUES
+(1, 8,    'Netflix',      'subscription'),
+(2, 1883, 'TVING',        'subscription'),
+(3, 356,  'wavve',        'subscription'),
+(4, 337,  'Disney+',      'subscription'),
+(5, 97,   'Watcha',       'subscription'),
+(6, 1881, 'Coupang Play', 'subscription'),
+(7, 350,  'Apple TV+',    'subscription'),
+(8, NULL, 'Google Play',  'store');
+
+INSERT INTO titles (title_id, tmdb_id, name, title_type, release_year, poster_url) VALUES
+(1,  496243, '기생충',        'movie', 2019, NULL),
+(2,  93405,  '오징어 게임',    'tv',    2021, NULL),
+(3,  27205,  '인셉션',        'movie', 2010, NULL),
+(4,  157336, '인터스텔라',     'movie', 2014, NULL),
+(5,  438631, '듄',            'movie', 2021, NULL),
+(6,  97546,  '테드 래소',      'tv',    2020, NULL),
+(7,  100088, '더 라스트 오브 어스', 'tv', 2023, NULL),
+(8,  900001, '데모 영화 A',    'movie', 2024, NULL),
+(9,  900002, '데모 영화 B',    'movie', 2025, NULL),
+(10, 900003, '데모 드라마 C',  'tv',    2025, NULL);
+
+INSERT INTO title_genres (title_id, genre_id) VALUES
+(1,18), (1,53), (2,18), (2,9648), (3,28), (3,878), (4,878), (4,18),
+(5,878), (5,28), (6,35), (6,18), (7,18), (7,10765),
+(8,35), (9,28), (10,10749), (10,18);
+
+-- access_type_id : 1 = 구독(price NULL), 2 = 대여, 3 = 구매
+INSERT INTO availability (title_id, service_id, access_type_id, price, source) VALUES
+(1, 2, 1, NULL, 'tmdb'), (1, 3, 1, NULL, 'tmdb'), (1, 8, 2, 3000, 'manual'),
+(2, 1, 1, NULL, 'tmdb'),
+(3, 1, 1, NULL, 'tmdb'), (3, 3, 2, 2500, 'manual'), (3, 8, 3, 9900, 'manual'),
+(4, 1, 1, NULL, 'tmdb'), (4, 6, 1, NULL, 'tmdb'), (4, 8, 2, 3000, 'manual'),
+(5, 5, 1, NULL, 'tmdb'), (5, 8, 2, 4000, 'manual'),
+(6, 7, 1, NULL, 'tmdb'),
+(7, 6, 1, NULL, 'tmdb'),
+(8, 1, 1, NULL, 'tmdb'), (8, 2, 1, NULL, 'tmdb'), (8, 3, 2, 3000, 'manual'),
+(9, 1, 1, NULL, 'tmdb'), (9, 8, 2, 3000, 'manual'),
+(10, 3, 1, NULL, 'tmdb'), (10, 4, 1, NULL, 'tmdb');
+
+-- 로그인 기능은 아직 없으므로 데모 회원을 넣어 둔다 (password_hash 는 로그인 불가능한 자리표시값)
+INSERT INTO users (user_id, email, password_hash, nickname) VALUES
+(1, 'demo1@example.com', '-', '데모회원1'),
+(2, 'demo2@example.com', '-', '데모회원2'),
+(3, 'demo3@example.com', '-', '데모회원3'),
+(4, 'demo4@example.com', '-', '데모회원4');
+
+-- 인기 랭킹 시연용: 다른 회원들의 카트 (user 1 = 발표 시연자, 빈 카트로 시작)
+INSERT INTO cart_items (user_id, title_id) VALUES
+(2,1), (2,2), (2,4),
+(3,1), (3,2), (3,7),
+(4,2), (4,5), (4,1);
+
+
+4) 확인
+
+SELECT * FROM titles;
+SELECT * FROM availability;
+SELECT * FROM cart_items;
